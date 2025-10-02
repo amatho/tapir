@@ -14,6 +14,7 @@ import sttp.shared.Identity
 import sttp.tapir.{RawBodyType, RawPart, TapirFile}
 import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.interpreter.RawValue
+import sttp.tapir.server.netty.internal.MultipartUtil.DecoderOps
 import sttp.tapir.server.netty.internal.NettyRequestBody
 import sttp.tapir.server.netty.internal.reactivestreams.{FileWriterSubscriber, SimpleSubscriber}
 import sttp.tapir.server.netty.sync.*
@@ -93,11 +94,3 @@ private[sync] class NettySyncRequestBody(
           case None => rawChunkFlow
 
       case _ => Flow.empty // Empty request, return an empty stream
-
-extension (decoder: HttpPostMultipartRequestDecoder)
-  private def decodeChunk(httpContent: HttpContent): Seq[InterfaceHttpData] = {
-    decoder.offer(httpContent)
-    Iterator.continually(maybeNext()).takeWhile(_.nonEmpty).flatten.toSeq
-  }
-
-  private def maybeNext(): Option[InterfaceHttpData] = Option.when(decoder.hasNext)(decoder.next())
