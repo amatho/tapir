@@ -115,11 +115,11 @@ private[netty] trait NettyRequestBody[F[_], S <: Streams[S]] extends RequestBody
     }
   }
 
-  protected def toRawPart[R](
+  protected def toRawPart(
       serverRequest: ServerRequest,
       data: InterfaceHttpData,
-      partType: RawBodyType[R]
-  ): F[Part[R]] = {
+      partType: RawBodyType[?]
+  ): F[RawPart] = {
     data match {
       case httpData: HttpData => toRawPartHttpData(serverRequest, httpData, partType)
       case unsupportedDataType =>
@@ -127,11 +127,11 @@ private[netty] trait NettyRequestBody[F[_], S <: Streams[S]] extends RequestBody
     }
   }
 
-  private def toRawPartHttpData[R](
+  private def toRawPartHttpData(
       serverRequest: ServerRequest,
       httpData: HttpData,
-      partType: RawBodyType[R]
-  ): F[Part[R]] = {
+      partType: RawBodyType[?]
+  ): F[RawPart] = {
     // Note: Netty's multipart decoder does not expose other part headers, nor other disposition params.
     // Content-type is only exposed for file uploads.
 

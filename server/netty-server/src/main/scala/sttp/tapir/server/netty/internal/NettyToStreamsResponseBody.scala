@@ -58,7 +58,14 @@ private[netty] class NettyToStreamsResponseBody[S <: Streams[S]](streamCompatibl
         (ctx: ChannelHandlerContext) =>
           new ReactivePublisherNettyResponseContent(ctx.newPromise(), streamCompatible.publisherFromFile(v, DefaultChunkSize))
 
-      case _: RawBodyType.MultipartBody => throw new UnsupportedOperationException
+      case m: RawBodyType.MultipartBody =>
+        val entity = MultipartUtil.rawPartToMultipartFormEntity(m, v)
+        (ctx: ChannelHandlerContext) => {
+          ReactivePublisherNettyResponseContent(
+            ctx.newPromise(),
+            streamCompatible.publisherFromInputStream(() => entity.getContent, DefaultChunkSize, length = None)
+          )
+        }
     }
   }
 

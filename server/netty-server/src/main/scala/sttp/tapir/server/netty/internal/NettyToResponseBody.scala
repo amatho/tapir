@@ -48,10 +48,12 @@ private[netty] class NettyToResponseBody[F[_]](runAsync: RunAsync[F])(implicit m
       case RawBodyType.InputStreamRangeBody =>
         (ctx: ChannelHandlerContext) => ReactivePublisherNettyResponseContent(ctx.newPromise(), wrap(v))
 
-      case RawBodyType.FileBody => { (ctx: ChannelHandlerContext) =>
-        ReactivePublisherNettyResponseContent(ctx.newPromise(), wrap(v))
-      }
-      case _: RawBodyType.MultipartBody => throw new UnsupportedOperationException
+      case RawBodyType.FileBody => (ctx: ChannelHandlerContext) => ReactivePublisherNettyResponseContent(ctx.newPromise(), wrap(v))
+
+      case m: RawBodyType.MultipartBody =>
+        val entity = MultipartUtil.rawPartToMultipartFormEntity(m, v)
+        (ctx: ChannelHandlerContext) =>
+          ReactivePublisherNettyResponseContent(ctx.newPromise(), wrap(InputStreamRange(() => entity.getContent)))
     }
   }
 
