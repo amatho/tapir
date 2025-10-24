@@ -175,7 +175,13 @@ private[netty] trait NettyRequestBody[F[_], S <: Streams[S]] extends RequestBody
               file <- createFile(serverRequest)
               _ <- writeBytesToFile(httpData.get(), file)
             } yield file
-          else monad.unit(httpData.getFile)
+          else
+            for {
+              file <- createFile(serverRequest)
+              _ = file.delete()
+              nettyFile = httpData.getFile
+              _ = Files.createLink(file.toPath, nettyFile.toPath)
+            } yield file
 
         fileMonad.map(file => Part(partName, FileRange(file), contentType = contentType, fileName = fileName))
       case _: RawBodyType.MultipartBody =>
